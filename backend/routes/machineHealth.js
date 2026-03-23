@@ -136,7 +136,7 @@ router.post('/predict', async (req, res) => {
     };
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/predict', {
+        const response = await fetch(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/predict`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -187,7 +187,7 @@ router.post('/predict', async (req, res) => {
 // @access  Private
 router.post('/chat', async (req, res) => {
     try {
-        const response = await fetch('http://127.0.0.1:8000/chat', {
+        const response = await fetch(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(req.body)
@@ -209,7 +209,7 @@ router.post('/chat', async (req, res) => {
 // FEATURE 1: Multi-Machine Monitoring
 router.post('/analyze-batch', async (req, res) => {
     try {
-        const response = await axios.post('http://127.0.0.1:8000/machines/analyze', req.body);
+        const response = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/machines/analyze`, req.body);
         res.json(response.data);
     } catch (error) {
         console.error("AI Batch Analysis Failed:", error.message);
@@ -228,7 +228,7 @@ router.post('/upload-maintenance-log', upload.single('pdf'), async (req, res) =>
             contentType: 'application/pdf'
         });
 
-        const response = await axios.post('http://127.0.0.1:8000/upload-maintenance-pdf', form, {
+        const response = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/upload-maintenance-pdf`, form, {
             headers: form.getHeaders()
         });
 
@@ -246,7 +246,7 @@ router.post('/upload-maintenance-log', upload.single('pdf'), async (req, res) =>
 // FEATURE 5: Report Generation
 router.post('/generate-report', async (req, res) => {
     try {
-        const response = await axios.post('http://127.0.0.1:8000/generate-report', req.body);
+        const response = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/generate-report`, req.body);
         res.json(response.data);
     } catch (error) {
         res.status(500).json({ error: "Report generation failed" });
@@ -256,7 +256,7 @@ router.post('/generate-report', async (req, res) => {
 // FEATURE 7: Command Center Summary
 router.post('/maintenance-summary', async (req, res) => {
     try {
-        const response = await axios.post('http://127.0.0.1:8000/maintenance-summary', req.body);
+        const response = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/maintenance-summary`, req.body);
         res.json(response.data);
     } catch (error) {
         res.status(500).json({ error: "Summary generation failed" });
@@ -266,7 +266,7 @@ router.post('/maintenance-summary', async (req, res) => {
 // FEATURE 3: Machine History
 router.get('/history/:machineId', async (req, res) => {
     try {
-        const response = await axios.get(`http://127.0.0.1:8000/machines/${req.params.machineId}/history`);
+        const response = await axios.get(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/machines/${req.params.machineId}/history`);
         res.json(response.data);
     } catch (error) {
         res.status(500).json({ error: "History retrieval failed" });

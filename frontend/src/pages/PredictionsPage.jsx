@@ -22,7 +22,7 @@ const PredictionsPage = () => {
     useEffect(() => {
         const fetchPredictions = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/predictions', {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/predictions`, {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
                 });
                 setPredictions(res.data);

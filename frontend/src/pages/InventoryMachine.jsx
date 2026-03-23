@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import { 
   Plus, Search, Cpu, Activity, Database, ShieldAlert, 
   Brain, Zap, ArrowRight, X, LayoutGrid, List,
   Thermometer, Gauge, Clock, Calendar, CheckCircle,
-  AlertTriangle, Filter, MoreVertical, Settings
+  AlertTriangle, Filter, MoreVertical, Settings, RefreshCw
 } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Float, Sphere, MeshDistortMaterial, ContactShadows, Environment, Html } from '@react-three/drei';
@@ -53,34 +54,70 @@ const WireframeSphere = () => {
 };
 
 const MachineNode = ({ position, health, name, onSelect, isSelected }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const color = health > 80 ? "#10B981" : health > 40 ? "#F59E0B" : "#E11D48";
+  const groupRef = useRef();
+
+  useFrame((state, delta) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.5;
+    }
+  });
   
   return (
-    <group position={position} onClick={onSelect}>
-      <mesh castShadow position={[0, 0.5, 0]}>
-        <cylinderGeometry args={[0.5, 0.5, 1, 32]} />
+    <group 
+      ref={groupRef}
+      position={position} 
+      onClick={onSelect}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setIsHovered(true);
+      }}
+      onPointerOut={() => setIsHovered(false)}
+    >
+      {/* Base Box */}
+      <mesh castShadow position={[0, 0.25, 0]}>
+        <boxGeometry args={[1.5, 0.5, 1.5]} />
+        <meshPhysicalMaterial 
+          color="#1E293B" 
+          roughness={0.1} 
+          metalness={0.8}
+        />
+      </mesh>
+
+      {/* Status Cylinder */}
+      <mesh castShadow position={[0, 0.75, 0]}>
+        <cylinderGeometry args={[0.4, 0.4, 0.5, 32]} />
         <meshPhysicalMaterial 
           color={color} 
+          emissive={color}
+          emissiveIntensity={(isSelected || isHovered) ? 2 : 0.5}
           roughness={0.2} 
           metalness={0.9}
-          clearcoat={1}
-          clearcoatRoughness={0.1}
         />
       </mesh>
       
-      {isSelected && (
-        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.7, 0.8, 32]} />
-          <meshBasicMaterial color="#3B82F6" transparent opacity={0.5} />
-        </mesh>
+      {/* Transparent Gloom around base */}
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.8, 1.8]} />
+        <meshBasicMaterial color={color} transparent opacity={0.1} />
+      </mesh>
+
+      {(isSelected || isHovered || health < 40) && (
+        <Html distanceFactor={10} position={[0, 1.5, 0]} center>
+          <div className="bg-white px-4 py-3 rounded-2xl border-2 border-orange-500 shadow-2xl min-w-[120px] pointer-events-none whitespace-nowrap">
+            <p className="text-[10px] font-black text-orange-600 uppercase tracking-tighter leading-none mb-1">{name.replace('-', ' ')}</p>
+            <p className="text-sm font-black text-gray-900 leading-none">{health}% Health</p>
+          </div>
+        </Html>
       )}
 
-      <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-        <mesh position={[0, 1.5, 0]}>
-          <boxGeometry args={[0.1, 0.1, 0.1]} />
-          <meshPhysicalMaterial color={color} emissive={color} emissiveIntensity={5} toneMapped={false} />
+      {isSelected && (
+        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1, 1.1, 32]} />
+          <meshBasicMaterial color="#F97316" transparent opacity={0.8} />
         </mesh>
-      </Float>
+      )}
     </group>
   );
 };
@@ -104,7 +141,8 @@ const TELEMETRY_DATA = [
 ];
 
 const InventoryMachine = () => {
-  const [selectedMachine, setSelectedMachine] = useState(MOCK_MACHINES[0]);
+  const [machines, setMachines] = useState([]);
+  const [selectedMachine, setSelectedMachine] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [syncTime, setSyncTime] = useState(0);
@@ -115,17 +153,32 @@ const InventoryMachine = () => {
     purchaseDate: new Date().toISOString().split('T')[0], 
     warrantyEnd: '' 
   });
-
-  // Simulated live sync timer
+ 
+  const fetchMachines = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/inventory-machines`, {
+          headers: { 'x-auth-token': localStorage.getItem('token') }
+      });
+      setMachines(res.data.length > 0 ? res.data : MOCK_MACHINES);
+      if (res.data.length > 0 && !selectedMachine) {
+        setSelectedMachine(res.data[0]);
+      }
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      setMachines(MOCK_MACHINES);
+    }
+  };
+ 
   useEffect(() => {
+    fetchMachines();
     const timer = setInterval(() => setSyncTime(prev => (prev + 1) % 60), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const filteredMachines = MOCK_MACHINES.filter(m => 
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.serial.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.type.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMachines = machines.filter(m => 
+    m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.serial?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.type?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Onboarding Logic: Auto-fill
@@ -146,13 +199,22 @@ const InventoryMachine = () => {
     }
   }, [newMachine.purchaseDate]);
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
-    // Simulate backend POST
-    const nextId = MOCK_MACHINES.length + 1;
-    const pos = [Math.random() * 10 - 5, 0, Math.random() * 10 - 5];
-    // In a real app we would update the list state here
-    setIsAdding(false);
+    try {
+      const posX = Math.random() * 16 - 8;
+      const posZ = Math.random() * 16 - 8;
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/inventory-machines`, 
+        { ...newMachine, posX, posZ },
+        { headers: { 'x-auth-token': localStorage.getItem('token') } }
+      );
+      setIsAdding(false);
+      setNewMachine({ name: '', type: 'CNC Center', serial: '', purchaseDate: new Date().toISOString().split('T')[0], warrantyEnd: '' });
+      fetchMachines();
+    } catch (err) {
+      console.error("Save Error:", err);
+      setIsAdding(false);
+    }
   };
 
   return (
@@ -168,11 +230,14 @@ const InventoryMachine = () => {
           <div className="h-3 w-px bg-white/10" />
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sync: {syncTime}s ago</span>
         </div>
-        <div className="flex items-center space-x-6">
-          <span className="text-[10px] font-bold text-white uppercase tracking-widest flex items-center">
-            <Activity size={12} className="mr-2 text-blue-400" /> 24 Assets Tracked
-          </span>
-        </div>
+          <div className="flex items-center space-x-6">
+            <span className="text-[10px] font-bold text-white uppercase tracking-widest flex items-center">
+              <Activity size={12} className="mr-2 text-blue-400" /> {machines.length} Assets Tracked
+            </span>
+            <button onClick={fetchMachines} className="p-1 hover:text-cyan-400 transition-colors">
+              <RefreshCw size={12} className={syncTime % 10 === 0 ? "animate-spin" : ""} />
+            </button>
+          </div>
       </div>
 
       {/* 2. KINETIC HEADER SECTION */}
@@ -273,50 +338,74 @@ const InventoryMachine = () => {
         </div>
 
         {/* Digital Twin Floor */}
-        <div className="lg:col-span-8 bg-[#020617] rounded-[3rem] h-[600px] relative overflow-hidden shadow-2xl">
-          <div className="absolute top-8 left-8 z-10">
-            <h3 className="text-white font-black text-xl tracking-tighter">Digital Twin Floor</h3>
-            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1">Real-time Node Visualization</p>
+        <div className="lg:col-span-8 bg-[#020617] rounded-[3rem] h-[600px] relative overflow-hidden shadow-2xl border border-white/5">
+          {/* Header Overlay */}
+          <div className="absolute top-10 left-10 z-10 pointer-events-none">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-4 h-4 text-orange-500">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8M3 3l6 6M3 3v4.8M3 3h4.8" /></svg>
+              </div>
+              <h3 className="text-white font-black text-2xl tracking-widest uppercase italic leading-none">Digital Twin Floor</h3>
+            </div>
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] ml-6">3D Factory Floor View • Live Nodes</p>
           </div>
           
-          <div className="absolute bottom-8 right-8 z-10 flex flex-col space-y-2">
-            <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-widest">Healthy</span>
+          {/* Legend Overlay */}
+          <div className="absolute bottom-10 right-10 z-10 flex items-center space-x-6 bg-[#0A1118]/80 backdrop-blur-xl px-6 py-4 rounded-full border border-white/10 shadow-3xl">
+            <div className="flex items-center space-x-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Healthy</span>
             </div>
-            <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-              <div className="w-2 h-2 rounded-full bg-amber-500" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-widest">Warning</span>
+            <div className="flex items-center space-x-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Warning</span>
             </div>
-            <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-              <div className="w-2 h-2 rounded-full bg-rose-500" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-widest">Critical</span>
+            <div className="flex items-center space-x-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Critical</span>
             </div>
           </div>
+ 
+          <Canvas shadows dpr={[1, 2]}>
+            <Suspense fallback={<Html center className="text-orange-500 text-xs font-black uppercase tracking-widest animate-pulse">Initializing Digital Twin Virtual Space...</Html>}>
+              <PerspectiveCamera makeDefault position={[12, 12, 12]} fov={45} />
+              <OrbitControls 
+                minPolarAngle={Math.PI / 6} 
+                maxPolarAngle={Math.PI / 2.2} 
+                enablePan={false}
+                dampingFactor={0.05}
+              />
+              
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 15, 10]} intensity={1.5} castShadow />
+              <spotLight position={[-10, 20, 10]} angle={0.2} penumbra={1} intensity={1} castShadow />
+              
+              {/* Floor Grid */}
+              <gridHelper args={[40, 40, "#1E293B", "#0F172A"]} position={[0, 0, 0]} opacity={0.3} transparent />
+              
+              {/* Central Orange Axes */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+                <planeGeometry args={[40, 0.05]} />
+                <meshBasicMaterial color="#F97316" transparent opacity={0.5} />
+              </mesh>
+              <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[0, 0.01, 0]}>
+                <planeGeometry args={[40, 0.05]} />
+                <meshBasicMaterial color="#F97316" transparent opacity={0.5} />
+              </mesh>
 
-          <Canvas shadows>
-            <Suspense fallback={<Html center className="text-blue-400 text-xs font-black uppercase tracking-widest">Initializing Digital Twin...</Html>}>
-              <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={50} />
-              <OrbitControls minPolarAngle={0} maxPolarAngle={Math.PI / 2.1} />
-              
-              <ambientLight intensity={0.4} />
-              <pointLight position={[10, 10, 10]} intensity={2} castShadow />
-              <spotLight position={[-10, 20, 10]} angle={0.15} penumbra={1} intensity={2} castShadow />
-              
-              <gridHelper args={[20, 20, "#1E293B", "#0F172A"]} position={[0, 0, 0]} />
-              
-              {MOCK_MACHINES.map((m) => (
+              {machines.map((m) => (
                 <MachineNode 
-                  key={m.id}
-                  position={m.pos}
+                  key={m._id || m.id}
+                  position={m.pos || [m.posX, 0, m.posZ]}
                   health={m.health}
                   name={m.name}
-                  isSelected={selectedMachine?.id === m.id}
+                  isSelected={selectedMachine?._id === m._id || selectedMachine?.id === m.id}
                   onSelect={() => setSelectedMachine(m)}
                 />
               ))}
+              
               <Environment preset="night" />
-              <ContactShadows opacity={0.4} scale={10} blur={2.4} far={10} />
+              <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={40} blur={2.5} far={10} color="#000000" />
             </Suspense>
           </Canvas>
         </div>

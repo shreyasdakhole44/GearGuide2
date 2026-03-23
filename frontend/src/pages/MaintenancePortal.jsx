@@ -213,41 +213,110 @@ const MaintenancePortal = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         {/* --- DISPATCH TERMINAL (3D) --- */}
-                        <section className="lg:col-span-8 bg-slate-900/20 rounded-[3rem] border border-white/5 overflow-hidden relative min-h-[500px] shadow-2xl">
-                            <div className="absolute top-8 left-8 z-10 space-y-2">
-                                <h2 className="text-2xl font-black uppercase tracking-tighter">Dispatch Terminal</h2>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Sector Alpha-01 Live Digital Twin</p>
+                        <section className="lg:col-span-8 bg-[#050A10] rounded-[3.5rem] border border-white/10 overflow-hidden relative min-h-[580px] shadow-[0_40px_100px_rgba(0,0,0,0.6)] group">
+                            {/* Decorative Background Elements */}
+                            <div className="absolute inset-0 opacity-20 z-0 pointer-events-none" style={{ 
+                                backgroundImage: `radial-gradient(circle at 2px 2px, rgba(249, 115, 22, 0.15) 1px, transparent 0)`,
+                                backgroundSize: '24px 24px' 
+                            }}></div>
+                            
+                            {/* HUD Header */}
+                            <div className="absolute top-10 left-10 z-20 flex items-start gap-6">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-950/50">
+                                            <Terminal size={22} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-black uppercase tracking-tighter text-white">Dispatch Terminal</h2>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping"></span>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">Sector Alpha-01 Live Digital Twin</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="absolute top-8 right-8 z-10 flex gap-4">
-                                <div className="bg-black/40 backdrop-blur-md border border-white/10 p-4 rounded-3xl flex gap-6">
-                                    <SensorWidget label="PWR" value="1.2kW" color="text-cyan-400" />
-                                    <SensorWidget label="TMP" value="42°C" color="text-orange-400" />
-                                    <SensorWidget label="VIB" value="Nominal" color="text-emerald-400" />
+                            {/* Tactical Sensor HUD */}
+                            <div className="absolute top-10 right-10 z-20">
+                                <div className="bg-black/60 backdrop-blur-2xl border border-white/10 p-5 rounded-[2.5rem] flex items-center gap-8 shadow-2xl">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full border-2 border-orange-500/20 flex items-center justify-center relative">
+                                            <div className="absolute inset-0 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                                            <Zap size={16} className="text-orange-500" />
+                                        </div>
+                                        <SensorWidget label="Main PWR" value="1.24 kW" color="text-white" />
+                                    </div>
+                                    <div className="w-px h-10 bg-white/10"></div>
+                                    <div className="flex items-center gap-4">
+                                        <Thermometer size={18} className="text-orange-400" />
+                                        <SensorWidget label="Core TMP" value="42.8 °C" color="text-orange-400" />
+                                    </div>
+                                    <div className="w-px h-10 bg-white/10"></div>
+                                    <div className="flex items-center gap-4 text-emerald-400">
+                                        <div className="flex flex-col gap-0.5">
+                                            {[1,2,3].map(i => <div key={i} className="w-4 h-1 bg-current opacity-30 rounded-full"></div>)}
+                                            <div className="w-4 h-1 bg-current rounded-full mt-0.5"></div>
+                                        </div>
+                                        <SensorWidget label="VIB State" value="Nominal" color="text-emerald-400" />
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div className="w-full h-full cursor-grab active:cursor-grabbing">
+                            {/* 3D Visualizer Context */}
+                            <div className="w-full h-full cursor-grab active:cursor-grabbing relative z-10 pt-20">
+                                <div className="absolute inset-0 bg-gradient-to-b from-[#050A10] via-transparent to-[#050A10] z-20 pointer-events-none"></div>
                                 <Canvas dpr={[1, 2]} gl={{ antialias: true }}>
                                     <Suspense fallback={null}>
-                                        <PerspectiveCamera makeDefault position={[5, 5, 8]} />
+                                        <PerspectiveCamera makeDefault position={[6, 3, 10]} />
                                         <Environment preset="city" />
-                                        <GlossyAgent />
-                                        <ContactShadows opacity={0.4} scale={10} blur={2.4} far={10} />
+                                        <group position={[0, 1.5, 0]}>
+                                            <GlossyAgent />
+                                        </group>
+                                        <ContactShadows opacity={0.5} scale={12} blur={2} far={10} color="#F97316" />
                                     </Suspense>
                                 </Canvas>
                             </div>
 
-                            <div className="absolute bottom-8 left-8 right-8 z-10 flex justify-between items-end">
-                                <div className="space-y-4">
-                                    <div className="flex gap-2">
-                                        <button className="px-4 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-lg shadow-orange-950/20">Init Calibration</button>
-                                        <button className="px-4 py-2 bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all border border-white/5">Full Diagnostics</button>
+                            {/* Terminal Footer UI */}
+                            <div className="absolute bottom-10 left-10 right-10 z-30 flex justify-between items-end">
+                                <div className="space-y-6">
+                                    <div className="bg-black/60 backdrop-blur-xl border border-white/5 p-4 rounded-3xl flex gap-6 items-center">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-orange-600"></div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Session:</span>
+                                            <span className="text-[10px] font-mono font-black text-white">04:12:88</span>
+                                        </div>
+                                        <div className="w-px h-4 bg-white/10"></div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hardware:</span>
+                                            <span className="text-[10px] font-black text-orange-400 uppercase">Neural_Grok_v9</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <button className="px-8 py-4 bg-orange-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-orange-500 transition-all shadow-[0_20px_40px_rgba(249,115,22,0.3)] flex items-center gap-3 group/btn">
+                                            <span>Initialize Calibration</span>
+                                            <ArrowUpRight size={16} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                                        </button>
+                                        <button className="px-8 py-4 bg-white/5 backdrop-blur-md text-white border border-white/10 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center gap-3">
+                                            <Activity size={16} className="text-orange-500" />
+                                            <span>Full System Diagnostics</span>
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Model Precision</p>
-                                    <p className="text-xs font-mono font-bold text-slate-400 uppercase">99.8% Optimized</p>
+                                
+                                <div className="flex flex-col items-end gap-3 translate-y-2">
+                                    <div className="p-4 bg-black/40 border border-white/5 rounded-2xl text-right">
+                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Telemetry Confidence</p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                                <div className="w-[99.8%] h-full bg-gradient-to-r from-orange-600 to-amber-400"></div>
+                                            </div>
+                                            <p className="text-xs font-mono font-bold text-white uppercase">99.8%</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest pr-2">System_ID: GG-X99-22-ALPHA</p>
                                 </div>
                             </div>
                         </section>

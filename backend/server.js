@@ -29,6 +29,7 @@ app.use('/api/logs', require('./routes/logs'));
 app.use('/api/predictions', require('./routes/predictions'));
 app.use('/api/machine-health', require('./routes/machineHealth'));
 app.use('/api/vajranet', require('./routes/vajra'));
+app.use('/api/inventory-machines', require('./routes/inventoryMachines'));
 
 
 const PORT = process.env.PORT || 5000;

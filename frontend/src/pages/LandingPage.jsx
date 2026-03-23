@@ -188,8 +188,8 @@ const LandingPage = () => {
               </div>
             ) : (
               <>
-                <Link to="/dashboard" className="px-5 py-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-white rounded-full transition-all">
-                    Access Portal
+                <Link to="/login" className="px-5 py-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-white rounded-full transition-all">
+                    Sign In
                 </Link>
                 <Link to="/register" className="px-5 py-2 bg-[#0A1118] text-white text-xs font-bold rounded-full hover:bg-[#3B82F6] shadow-md transition-all flex items-center">
                   Register Company <ArrowRight size={14} className="ml-2" />

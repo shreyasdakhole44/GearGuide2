@@ -14,14 +14,14 @@ const LoginPage = ({ setAuth }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, formData);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify({
         name: res.data.user?.name || 'Authorized Officer',
         company: res.data.user?.company || 'GearGuide Partner'
       }));
       setAuth(true);
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       if (err.response) {
         setError(err.response.data.message || 'Authentication Failed');
@@ -30,7 +30,7 @@ const LoginPage = ({ setAuth }) => {
         localStorage.setItem('token', 'fake-jwt-token');
         localStorage.setItem('user', JSON.stringify({ name: 'Admin User', company: 'Industrial GigaPlant' }));
         setAuth(true);
-        navigate('/dashboard');
+        navigate('/');
       }
     }
     setLoading(false);
