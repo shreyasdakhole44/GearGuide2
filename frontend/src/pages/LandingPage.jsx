@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  ArrowRight, Bot, Server, FileText, Zap, CheckCircle, ShieldAlert, Building2, Phone, Mail, MapPin, LogOut, User, Cpu, Activity, Database, Settings, Brain
+  ArrowRight, Bot, Server, FileText, Zap, CheckCircle, ShieldAlert, Building2, Phone, Mail, MapPin, LogOut, User, Cpu, Activity, Database, Settings, Brain,
+  Volume2, VolumeX, Mic, StopCircle, X, Send, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThreeWorkflow from '../components/ThreeWorkflow';
@@ -9,6 +10,7 @@ import ChatBot from '../components/ChatBot';
 
 const LandingPage = () => {
   const [tickerOffset, setTickerOffset] = useState(0);
+  const [isHoveringTicker, setIsHoveringTicker] = useState(false);
   const [user, setUser] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const navigate = useNavigate();
@@ -23,11 +25,12 @@ const LandingPage = () => {
 
   // Auto-scrolling ticker effect
   useEffect(() => {
+    if (!isHoveringTicker) return;
     const interval = setInterval(() => {
-      setTickerOffset((prev) => (prev > 100 ? 0 : prev + 0.05));
+      setTickerOffset((prev) => (prev > 100 ? 0 : prev + 0.015));
     }, 16);
     return () => clearInterval(interval);
-  }, []);
+  }, [isHoveringTicker]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -139,20 +142,20 @@ const LandingPage = () => {
 
           {/* Center Links - The Three Core Pillars */}
           <div className="hidden lg:flex items-center space-x-10 px-6">
-            <a href="#ai-agent" className="flex flex-col items-center group">
+            <Link to="/dashboard" className="flex flex-col items-center group">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-[#3B82F6] transition-colors">Platform</span>
               <span className="text-sm font-black text-gray-900 group-hover:text-[#3B82F6] transition-colors">Superior AI Agent</span>
-            </a>
+            </Link>
             <div className="w-px h-8 bg-gray-200"></div>
-            <a href="#inventory" className="flex flex-col items-center group">
+            <Link to="/inventory" className="flex flex-col items-center group">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-[#059669] transition-colors">Hardware</span>
               <span className="text-sm font-black text-gray-900 group-hover:text-[#059669] transition-colors">Inventory Machine</span>
-            </a>
+            </Link>
             <div className="w-px h-8 bg-gray-200"></div>
-            <a href="#maintenance" className="flex flex-col items-center group">
+            <Link to="/maintenance" className="flex flex-col items-center group">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-[#F59E0B] transition-colors">Tracking</span>
               <span className="text-sm font-black text-gray-900 group-hover:text-[#F59E0B] transition-colors">Maintenance Logs</span>
-            </a>
+            </Link>
             {user && (
               <>
                 <div className="w-px h-8 bg-gray-200"></div>
@@ -282,7 +285,7 @@ const LandingPage = () => {
               <p className="text-sm text-gray-500 font-medium leading-relaxed mb-6">
                 Automatically dispatch AI work orders. Keep comprehensive, immutable records of all operations and technician interventions.
               </p>
-              <Link to="/dashboard" className="mt-auto w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition-colors text-sm shadow-[0_10px_20px_rgba(234,88,12,0.3)] flex justify-center items-center">
+              <Link to="/maintenance" className="mt-auto w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition-colors text-sm shadow-[0_10px_20px_rgba(234,88,12,0.3)] flex justify-center items-center">
                 View Maintenance Feed <ArrowRight size={16} className="ml-2" />
               </Link>
             </div>
@@ -483,6 +486,16 @@ const LandingPage = () => {
               </a>
             </div>
           </div>
+
+          {/* TEAM ARGUNA FOOTER */}
+          <div className="mt-20 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center md:text-left">
+              made by love with <span className="text-red-500">♥</span> team arguna
+            </p>
+            <p className="text-xs font-black text-gray-900 uppercase tracking-tighter">
+              &copy; 2026 GearGuide. all copyrights are resrved.
+            </p>
+          </div>
         </div>
       </footer>
 
@@ -491,7 +504,11 @@ const LandingPage = () => {
         BOTTOM TICKER BAR
         =================
       */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex items-center h-12 z-50 overflow-hidden text-sm font-bold text-gray-700 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+      <div 
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex items-center h-12 z-50 overflow-hidden text-sm font-bold text-gray-700 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] cursor-help"
+        onMouseEnter={() => setIsHoveringTicker(true)}
+        onMouseLeave={() => setIsHoveringTicker(false)}
+      >
         <div
           className="flex whitespace-nowrap"
           style={{ transform: `translateX(-${tickerOffset}%)` }}
@@ -511,7 +528,213 @@ const LandingPage = () => {
           ))}
         </div>
       </div>
-      <ChatBot />
+      <IntegratedBot />
+    </div>
+  );
+};
+
+// --- INTEGRATED BOT COMPONENT ---
+
+const IntegratedBot = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'bot', text: "Welcome to the GearGuide Command Center. I am your generative assistant. How may I serve your mission protocols today?", isInitial: true }
+  ]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+
+  const knowledgeBase = {
+    "help": "I can help you navigate the GearGuide portal. You can register your company, access the AI Sentinel dashboard, manage inventory machines, or view real-time maintenance logs. Which sector shall we initialize?",
+    "contact": "Our strategic support team is available at onboard@gearguide.ai or via our direct line: 1800 103 0222. Mission support is primary.",
+    "portal": "The GearGuide portal is a unified industrial operating system. It synchronizes IoT hardware (Inventory Machines) with neural-link software (Superior AI Agent) to eliminate unplanned downtime.",
+    "how_it_works": "GearGuide was engineered to solve the 'Black Box' problem in manufacturing. It works by ingesting raw telemetry (Torque, Heat, Vibration), processing it through our proprietary NN-Grok model, and delivering deterministic failure windows before they occur. This ensures 99.9% facility uptime."
+  };
+
+  const initialQuestions = [
+    { id: 'help', label: 'Help' },
+    { id: 'contact', label: 'Contact Us' },
+    { id: 'portal', label: 'Portal Related Questions' },
+    { id: 'how_it_works', label: 'Why this portal created and how it works', highlighted: true }
+  ];
+
+  const speak = (text) => {
+    if (isMuted) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Select a smooth, high-quality voice
+    const voices = window.speechSynthesis.getVoices();
+    // Prioritize natural sounding voices: Google UK female, Google US, or similar
+    const preferredVoice = voices.find(v => v.name.includes("Google UK English Female")) || 
+                           voices.find(v => v.name.includes("Google US English")) || 
+                           voices.find(v => v.name.includes("Natural")) ||
+                           voices.find(v => v.lang === "en-GB") ||
+                           voices[0];
+    
+    if (preferredVoice) utterance.voice = preferredVoice;
+    utterance.rate = 1.05; // Slightly faster for modern crisp feeling
+    utterance.pitch = 1.0; 
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
+  const handleQuestionClick = (q) => {
+    const answer = knowledgeBase[q.id];
+    setMessages(prev => [...prev, 
+      { role: 'user', text: q.label },
+      { role: 'bot', text: answer }
+    ]);
+    speak(answer);
+  };
+
+  const handleSend = () => {
+    if (!inputValue.trim()) return;
+    const userMsg = inputValue.trim();
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setInputValue('');
+    
+    // Simple response logic for custom queries
+    setTimeout(() => {
+      const response = "Processing request through Sentinel Core... Analyzing protocols. For specific data, please use our authenticated dashboard.";
+      setMessages(prev => [...prev, { role: 'bot', text: response }]);
+      speak(response);
+    }, 600);
+  };
+
+  return (
+    <div className="fixed bottom-20 right-8 z-[100] font-inter">
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="mb-4 w-[420px] bg-[#0A1118] border border-blue-900/50 rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col"
+          >
+            {/* Bot Header */}
+            <div className="p-6 bg-gradient-to-r from-blue-900 to-black flex justify-between items-center text-white border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-xl border border-blue-500/30">
+                  <Bot size={24} className="text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-black uppercase tracking-widest text-[10px] text-blue-400">Generative Assistant</h4>
+                  <p className="text-xl font-black tracking-tighter">GearGuide AI</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setIsMuted(!isMuted)}
+                  className={`p-2 rounded-lg transition-colors ${isMuted ? 'text-red-400 bg-red-400/10' : 'text-gray-400 hover:bg-white/5'}`}
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                </button>
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 p-6 h-[400px] overflow-y-auto space-y-6 scrollbar-hide">
+              {messages.map((msg, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  <div className={`max-w-[85%] p-4 rounded-[1.5rem] text-sm font-bold leading-relaxed shadow-lg ${
+                    msg.role === 'user' 
+                      ? 'bg-blue-600 text-white rounded-br-none' 
+                      : 'bg-white/5 text-gray-200 border border-white/5 rounded-bl-none'
+                  }`}>
+                    {msg.text}
+                  </div>
+                  
+                  {msg.isInitial && (
+                    <div className="mt-6 w-full space-y-3">
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Protocol Directives:</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {initialQuestions.map((q) => (
+                          <button
+                            key={q.id}
+                            onClick={() => handleQuestionClick(q)}
+                            className={`px-4 py-3 rounded-2xl text-left text-xs font-black transition-all hover:scale-[1.02] active:scale-95 border ${
+                              q.highlighted 
+                                ? 'bg-blue-600 text-white border-blue-400 shadow-[0_10px_20px_rgba(59,130,246,0.3)]' 
+                                : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                            }`}
+                          >
+                            {q.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Speaking Hud */}
+            {isSpeaking && (
+               <div className="px-6 py-2 bg-blue-600 flex items-center justify-between text-white text-[10px] font-black uppercase tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {[1,2,3,4].map(i => <div key={i} className="w-1 h-3 bg-white rounded-full animate-bounce" style={{animationDelay: `${i*0.1}s`}}></div>)}
+                    </div>
+                    Neural Voice Active...
+                  </div>
+                  <button onClick={stopSpeaking} className="flex items-center gap-1 bg-black/20 px-2 py-1 rounded-md hover:bg-black/40">
+                    <StopCircle size={12} /> Close Speak
+                  </button>
+               </div>
+            )}
+
+            {/* Input Area */}
+            <div className="p-4 bg-black/40 border-t border-white/5 flex gap-3">
+              <input 
+                type="text" 
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="Direct neural query..." 
+                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-gray-600" 
+              />
+              <button 
+                onClick={handleSend}
+                className="p-3 bg-blue-600 rounded-2xl text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/40"
+              >
+                <Send size={20} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Trigger */}
+      <motion.button 
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`h-16 w-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-all ${
+          isOpen ? 'bg-red-500 rotate-90' : 'bg-blue-600'
+        }`}
+      >
+        {isOpen ? <X size={28} className="text-white" /> : <MessageSquare size={28} className="text-white" />}
+      </motion.button>
     </div>
   );
 };

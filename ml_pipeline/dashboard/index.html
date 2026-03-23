@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML-Sentinel | Analytics Command Center</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-deep: #020617;
+            --accent-blue: #3B82F6;
+            --accent-green: #10B981;
+            --accent-rose: #F43F5E;
+            --glass: rgba(15, 23, 42, 0.8);
+            --border: rgba(59, 130, 246, 0.2);
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .title-group h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .status-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            backdrop-blur: 10px;
+        }
+
+        .card-label {
+            font-size: 0.65rem;
+            font-weight: 900;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 900;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .chart-container {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            min-height: 400px;
+        }
+
+        .alert-panel {
+            background: rgba(244, 63, 94, 0.05);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="title-group">
+            <h1>ML-SENTINEL <span style="color: var(--accent-blue)">ANALYTICS</span></h1>
+            <p style="font-size: 0.7rem; color: #475569; margin: 0.5rem 0 0 0;">Neural Monitoring & Predictive Diagnostic Core</p>
+        </div>
+        <div id="connection-status" class="status-badge">ML_CORE_ACTIVE</div>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <div class="card-label">Asset Health Score</div>
+            <div id="health-score" class="card-value" style="color: var(--accent-green)">94%</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Remaining Life (RUL)</div>
+            <div id="rul-value" class="card-value">142h</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Failure Probability</div>
+            <div id="failure-prob" class="card-value" style="color: var(--accent-rose)">0.12%</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Anomalies Detected</div>
+            <div id="anomaly-count" class="card-value">0</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="chart-container">
+            <canvas id="vibration-chart"></canvas>
+        </div>
+        <div class="alert-panel">
+            <div class="card-label" style="color: var(--accent-rose)">Predictive Alerts</div>
+            <div id="alert-list" style="font-size: 0.8rem; line-height: 1.6;">
+                <p>System scanning: All operational parameters within nominal thresholds.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('vibration-chart').getContext('2d');
+        const vibrationChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 20}, (_, i) => i),
+                datasets: [{
+                    label: 'Vibration Amplitude (IPS)',
+                    data: Array.from({length: 20}, () => 0.8 + Math.random() * 0.4),
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, border: { display: false } },
+                    x: { grid: { display: false }, border: { display: false } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Basic polling simulation
+        setInterval(() => {
+            const newValue = 0.8 + Math.random() * 0.4;
+            vibrationChart.data.datasets[0].data.shift();
+            vibrationChart.data.datasets[0].data.push(newValue);
+            vibrationChart.update('none');
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -63,49 +63,75 @@ router.post('/predict', async (req, res) => {
             neural_directive_log.push("Pattern Match: Intermittent stoppage detected in joint actuator.");
         }
 
-        const is_critical = simulated_p > 0.7;
-        const potential_savings = simulated_p * 45000;
+        const p = simulated_p;
+        let status, system_status, insight, priority, timeline, actions;
+
+        if (p < 0.30) {
+            status = "HEALTHY";
+            system_status = "STABLE OPERATION";
+            insight = "All operational parameters within nominal thresholds.";
+            priority = "LOW";
+            timeline = "Routine Maintenance Cycle";
+            actions = ["Continue standard monitoring", "Monthly inspection"];
+        } else if (p < 0.60) {
+            status = "WARNING";
+            system_status = "CAUTION REQUIRED";
+            insight = "Accelerated Wear Detected - Variance in vibration FFT";
+            priority = "MEDIUM";
+            timeline = "Schedule inspection within 7 days";
+            actions = ["Inspect drive assembly", "Check lubrication levels"];
+        } else if (p < 0.80) {
+            status = "DEGRADED";
+            system_status = "PERFORMANCE DEGRADED";
+            insight = "Significant Structural Fatigue Detected";
+            priority = "HIGH";
+            timeline = "Inspect within 24-48 hours";
+            actions = ["Full system diagnostic", "Reduce machine load"];
+        } else {
+            status = "CRITICAL";
+            system_status = "CRITICAL CONDITION";
+            insight = "Imminent Mechanical Failure - Critical Torque Spikes";
+            priority = "CRITICAL";
+            timeline = "IMMEDIATE DISPATCH";
+            actions = ["Emergency shutdown authorized", "Immediate component replacement"];
+        }
+
+        const is_critical = p > 0.6;
+        const potential_savings = p * 45000;
         const roi_val = (potential_savings / 1200) * 100;
 
         return res.json({
             // Core Identity
             machine: machine_name || "ST-900 INDUSTRIAL CORE",
             guardrail_status: "VALIDATED",
+            system_status: system_status,
             
             // High-Fidelity Diagnostic
-            neural_insight: is_critical ? "Mechanical degradation in joint drive assembly." : "Routine operational wear",
-            reason: is_critical ? 
-                "Asymmetric load detected with thermal oscillation, suggesting imminent mechanical fatigue in the joint drive." : 
-                "Machine parameters within acceptable tolerance for current lifecycle stage.",
-            root_cause_analysis: is_critical ? 
-                ["Asymmetric load distribution", "Thermal oscillation", "Mechanical fatigue"] : 
-                ["Normal mechanical fatigue"],
-            recommended_actions: is_critical ? 
-                ["Recalibrate servo torque limits", "Check drive belt tension", "Initiate cooling bypass"] : 
-                ["Continue standard schedule", "Monitor vibration quarterly"],
+            neural_insight: insight,
+            reason: insight,
+            root_cause_analysis: actions.map(a => a.split(' ')[0]), // Mocking cause from action
+            recommended_actions: actions,
             
             // Metrics & Probability
-            final_prob: simulated_p,
-            failure_probability: `${(simulated_p * 100).toFixed(1)}%`,
-            predicted_failure_time: is_critical ? `${Math.round(20 * (1 - simulated_p))} hours` : "30+ Days",
+            final_prob: p,
+            failure_probability: `${(p * 100).toFixed(1)}%`,
+            predicted_failure_time: is_critical ? `${Math.round(20 * (1 - p))} hours` : "30+ Days",
             confidence_score: `${(85 + Math.random() * 10).toFixed(1)}%`, 
             isCritical: is_critical,
             is_critical: is_critical,
-            priority_level: is_critical ? "HIGH" : "NORMAL",
-            dispatch_timeline: is_critical ? "Immediate inspection requested." : "Next scheduled maintenance in 30 days.",
+            priority_level: priority,
+            dispatch_timeline: timeline,
             
             // Economic Impact
             potential_savings: `$${potential_savings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
             roi_projection: `${roi_val.toFixed(1)}%`,
             
             // Meta & Logs
-            summary: is_critical ? "CRITICAL CRISIS DETECTED" : "SYSTEM STABLE",
+            summary: system_status,
             real_time_sensor_snapshot: sensor_snapshot,
             neural_directive_log,
             isSimulated: true,
-            interpretation: is_critical ? 
-                "The AI agent analyzed sensor data. Synchronized anomalies in vibration and torque suggest imminent mechanical fatigue." :
-                "Operations nominal. All parameters within baseline performance."
+            interpretation: insight
         });
     };
 

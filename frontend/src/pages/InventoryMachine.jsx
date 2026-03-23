@@ -7,7 +7,7 @@ import {
   AlertTriangle, Filter, MoreVertical, Settings
 } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Float, Sphere, MeshDistortMaterial, ContactShadows } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Float, Sphere, MeshDistortMaterial, ContactShadows, Environment, Html } from '@react-three/drei';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 // --- STYLED COMPONENTS ---
@@ -104,7 +104,29 @@ const TELEMETRY_DATA = [
 ];
 
 const InventoryMachine = () => {
-  const [newMachine, setNewMachine] = useState({ name: '', type: 'CNC Center', serial: '', purchaseDate: new Date().toISOString().split('T')[0], warrantyEnd: '' });
+  const [selectedMachine, setSelectedMachine] = useState(MOCK_MACHINES[0]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [syncTime, setSyncTime] = useState(0);
+  const [newMachine, setNewMachine] = useState({ 
+    name: '', 
+    type: 'CNC Center', 
+    serial: '', 
+    purchaseDate: new Date().toISOString().split('T')[0], 
+    warrantyEnd: '' 
+  });
+
+  // Simulated live sync timer
+  useEffect(() => {
+    const timer = setInterval(() => setSyncTime(prev => (prev + 1) % 60), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const filteredMachines = MOCK_MACHINES.filter(m => 
+    m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.serial.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    m.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Onboarding Logic: Auto-fill
   useEffect(() => {
@@ -161,12 +183,13 @@ const InventoryMachine = () => {
             <PerspectiveCamera makeDefault position={[0, 0, 5]} />
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
-            <Suspense fallback={null}>
+            <Suspense fallback={<Html center className="text-white text-xs font-bold uppercase tracking-widest">Loading Analytics...</Html>}>
               <Float speed={1.5} rotationIntensity={1} floatIntensity={1}>
                 <WireframeSphere />
               </Float>
+              <Environment preset="night" />
+              <ContactShadows opacity={0.4} scale={10} blur={2.4} far={10} />
             </Suspense>
-            <ContactShadows opacity={0.4} scale={10} blur={2.4} far={10} />
           </Canvas>
         </div>
 
@@ -272,25 +295,29 @@ const InventoryMachine = () => {
           </div>
 
           <Canvas shadows>
-            <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={50} />
-            <OrbitControls minPolarAngle={0} maxPolarAngle={Math.PI / 2.1} />
-            
-            <ambientLight intensity={0.4} />
-            <pointLight position={[10, 10, 10]} intensity={2} castShadow />
-            <spotLight position={[-10, 20, 10]} angle={0.15} penumbra={1} intensity={2} castShadow />
-            
-            <gridHelper args={[20, 20, "#1E293B", "#0F172A"]} position={[0, 0, 0]} />
-            
-            {MOCK_MACHINES.map((m) => (
-              <MachineNode 
-                key={m.id}
-                position={m.pos}
-                health={m.health}
-                name={m.name}
-                isSelected={selectedMachine?.id === m.id}
-                onSelect={() => setSelectedMachine(m)}
-              />
-            ))}
+            <Suspense fallback={<Html center className="text-blue-400 text-xs font-black uppercase tracking-widest">Initializing Digital Twin...</Html>}>
+              <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={50} />
+              <OrbitControls minPolarAngle={0} maxPolarAngle={Math.PI / 2.1} />
+              
+              <ambientLight intensity={0.4} />
+              <pointLight position={[10, 10, 10]} intensity={2} castShadow />
+              <spotLight position={[-10, 20, 10]} angle={0.15} penumbra={1} intensity={2} castShadow />
+              
+              <gridHelper args={[20, 20, "#1E293B", "#0F172A"]} position={[0, 0, 0]} />
+              
+              {MOCK_MACHINES.map((m) => (
+                <MachineNode 
+                  key={m.id}
+                  position={m.pos}
+                  health={m.health}
+                  name={m.name}
+                  isSelected={selectedMachine?.id === m.id}
+                  onSelect={() => setSelectedMachine(m)}
+                />
+              ))}
+              <Environment preset="night" />
+              <ContactShadows opacity={0.4} scale={10} blur={2.4} far={10} />
+            </Suspense>
           </Canvas>
         </div>
       </div>

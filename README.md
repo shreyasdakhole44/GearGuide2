@@ -29,6 +29,12 @@ GearGuide is a high-fidelity industrial monitoring system that combines machine 
 
 ### 1. AI Service (Python Backend)
 ```bash
+
+//it was live command
+LENOVO@LAPTOP-277FFBE0 MINGW64 /d/PROJECTS/Gear_Guide/GearGuide/ai_service (main)
+$ source .venv/Scripts/activate
+python main.py
+
 cd ai_service
 # Create and activate virtual environment
 python -m venv .venv

@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage';
 import SentinelPage from './pages/SentinelPage';
 import VajraNetPage from './pages/VajraNetPage';
 import InventoryMachine from './pages/InventoryMachine';
+import MaintenancePortal from './pages/MaintenancePortal';
 
 function App() {
   // Authentication check removed as per user request to remove login form
@@ -31,6 +32,7 @@ function App() {
         */}
         <Route path="/dashboard" element={<Layout><SentinelPage /></Layout>} />
         <Route path="/inventory" element={<Layout><InventoryMachine /></Layout>} />
+        <Route path="/maintenance" element={<Layout><MaintenancePortal /></Layout>} />
         <Route path="/vajranet" element={<Layout><VajraNetPage /></Layout>} />
 
         <Route path="/assistant" element={<Navigate to="/dashboard" replace />} />

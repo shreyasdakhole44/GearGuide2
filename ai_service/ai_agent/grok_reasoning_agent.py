@@ -7,7 +7,7 @@ load_dotenv()
 # Initialize Groq client
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-def generate_root_cause(machine_report: dict) -> str:
+def generate_root_cause(machine_report: dict, machine_context: dict = None) -> str:
     """
     Generates a technical explanation for the root cause based on model results.
     """
@@ -20,10 +20,12 @@ def generate_root_cause(machine_report: dict) -> str:
     ASSET DIAGNOSTIC: {insight}
     TECHNICAL REASON: {reason}
     FAILURE PROBABILITY: {prob}
+    MACHINE CONTEXT: {machine_context if machine_context else "N/A"}
 
     TASKS:
     Provide a concise, high-fidelity technical explanation of the root cause. 
     Focus on mechanical/electrical dynamics. 
+    If MACHINE CONTEXT is provided, compare sensor values to baselines.
     DO NOT predict probability. Use ONLY the provided model output.
 
     EXPLANATION:
@@ -40,7 +42,7 @@ def generate_root_cause(machine_report: dict) -> str:
     except Exception as e:
         return f"Reasoning link disrupted: {str(e)}"
 
-def generate_maintenance_explanation(machine_report: dict) -> str:
+def generate_maintenance_explanation(machine_report: dict, machine_context: dict = None) -> str:
     """
     Generates a detailed explanation for recommended maintenance actions.
     """
@@ -51,6 +53,7 @@ def generate_maintenance_explanation(machine_report: dict) -> str:
     [SYSTEM: SENTINEL MAINTENANCE ADVISOR]
     DIAGNOSTIC: {insight}
     RECOMMENDED ACTIONS: {actions}
+    MACHINE CONTEXT: {machine_context if machine_context else "N/A"}
 
     TASKS:
     Explain WHY these maintenance actions are critical to preventing the failure pattern detected.

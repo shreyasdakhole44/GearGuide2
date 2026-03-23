@@ -33,24 +33,26 @@ def initialize_db():
         index = faiss.IndexFlatL2(dimension)
         faiss.write_index(index, INDEX_FILE)
 
-def store_maintenance_log(machine_id: str, text: str):
+def store_maintenance_log(machine_id: str, log_text: str, machine_model: str = "Unknown", machine_type: str = "General"):
     """
-    Embeds maintenance text and stores it in FAISS index.
+    Embeds maintenance text and stores it in FAISS index with enhanced metadata.
     """
     global index, log_mapping
     
     if index is None:
         initialize_db()
         
-    embedding = model.encode([text])
-    faiss.normalize_L2(embedding) # Normalize for cosine similarity if using IndexFlatIP
+    embedding = model.encode([log_text])
+    faiss.normalize_L2(embedding)
     
     index.add(embedding.astype('float32'))
     
     # Update mapping
     log_entry = {
         "machine_id": machine_id,
-        "text": text,
+        "machine_model": machine_model,
+        "machine_type": machine_type,
+        "text": log_text,
         "timestamp": str(np.datetime64('now'))
     }
     log_mapping.append(log_entry)

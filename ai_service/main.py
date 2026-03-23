@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Body, UploadFile, File
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import torch
@@ -15,6 +16,15 @@ from ai_agent.grok_reasoning_agent import generate_root_cause, generate_maintena
 from vector_db.maintenance_vector_store import store_maintenance_log, search_similar_failures, get_machine_history, initialize_db
 from ingestion.pdf_parser import extract_text_from_pdf, parse_maintenance_data
 from reports.pdf_report_generator import generate_maintenance_report
+import sys
+
+# Add root project path to sys.path for cross-module imports
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
+from ml_pipeline.post_processing.decision_engine import decision_engine
+from ml_pipeline.context.context_builder import context_builder
 
 # -------------------------------
 # Neural Network Model Definition
@@ -41,7 +51,12 @@ class HealthNN(nn.Module):
 # FastAPI Setup
 # -------------------------------
 
-app = FastAPI(title="Sentinel Core - Executive Command Center")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    initialize_db()
+    yield
+
+app = FastAPI(title="Sentinel Core - Executive Command Center", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -109,9 +124,7 @@ except Exception as e:
     print("CRITICAL MODEL LOAD ERROR:", e)
 
 
-@app.on_event("startup")
-async def startup_event():
-    initialize_db()
+# Lifespan handled via @asynccontextmanager
 
 # -------------------------------
 # Core Prediction Logic (Isolated for reuse)
@@ -273,17 +286,32 @@ def run_prediction_core(data: dict):
 @app.post("/predict")
 async def predict(data: dict = Body(...)):
     try:
+        # Extract Identification Kernel Metadata
+        machine_id = data.get("machine_id", "Unknown")
+        machine_model = data.get("machine_model", "ST-900 INDUSTRIAL CORE")
+        machine_type = data.get("machine_type", "INDUSTRIAL UNIT")
+        
+        # Build Machine Context
+        context = context_builder.build_machine_context(machine_id, machine_model)
+        
         report = run_prediction_core(data)
         
-        # FEATURE 2: Grok Reasoning Agent (Non-deterministic explanations)
-        report["technical_explanation"] = generate_root_cause(report)
-        report["maintenance_briefing"] = generate_maintenance_explanation(report)
+        # FEATURE 2: Grok Reasoning Agent (Non-deterministic explanations) - NOW CONTEXT AWARE
+        report["technical_explanation"] = generate_root_cause(report, context)
+        report["maintenance_briefing"] = generate_maintenance_explanation(report, context)
         
-        # FEATURE 3: Vector Store archival
-        machine_name = data.get("machine_name") or data.get("machine_id", "Unknown")
+        # FEATURE 3: Vector Store archival - ENHANCED METADATA
         log_text = data.get("maintenance_log")
-        if log_text and machine_name:
-            store_maintenance_log(machine_name, log_text)
+        if log_text:
+            store_maintenance_log(
+                machine_id=machine_id,
+                machine_model=machine_model,
+                machine_type=machine_type,
+                log_text=log_text
+            )
+            
+        # --- POST-PROCESSING CONSISTENCY LAYER ---
+        report = decision_engine.correct_prediction(report, context)
             
         return report
     except Exception as e:
@@ -299,17 +327,24 @@ async def analyze_machines(request: dict = Body(...)):
         raise HTTPException(status_code=400, detail="No machine data provided.")
 
     async def analyze_unit(m):
-        # We wrap in a thread if logic was CPU intensive, but run_prediction_core is fast.
-        # However, the Reasoning calls are IO-bound (API).
+        # Extract context for each machine in batch
+        m_id = m.get("machine_id", "Unknown")
+        m_model = m.get("machine_model", "ST-900 INDUSTRIAL CORE")
+        context = context_builder.build_machine_context(m_id, m_model)
+        
         res = run_prediction_core(m)
-        res["machine_id"] = m.get("machine_id", "Unknown")
-        res["technical_explanation"] = generate_root_cause(res)
+        res["machine_id"] = m_id
+        res["technical_explanation"] = generate_root_cause(res, context)
+        
+        # --- POST-PROCESSING CONSISTENCY LAYER ---
+        res = decision_engine.correct_prediction(res, context)
+        
         return res
 
     results = await asyncio.gather(*[analyze_unit(m) for m in machines])
     
-    # Ranking
-    results.sort(key=lambda x: x["final_prob"], reverse=True)
+    # Ranking (Ensuring list type for robust sorting)
+    results = sorted(list(results), key=lambda x: x.get("final_prob", 0), reverse=True)
     
     return {"results": results}
 
@@ -332,8 +367,19 @@ async def upload_pdf(file: UploadFile = File(...)):
         report = run_prediction_core(data)
         
         m_id = data.get("machine_id", "PDF_EXTRACT")
+        m_model = data.get("machine_model", "ST-900 INDUSTRIAL CORE")
+        context = context_builder.build_machine_context(m_id, m_model)
+        
         if data.get("maintenance_log"):
-            store_maintenance_log(m_id, data["maintenance_log"])
+            store_maintenance_log(
+                machine_id=m_id,
+                machine_model=m_model,
+                machine_type=data.get("machine_type", "PDF PROFILE"),
+                log_text=data["maintenance_log"]
+            )
+            
+        # --- POST-PROCESSING CONSISTENCY LAYER ---
+        report = decision_engine.correct_prediction(report, context)
             
         return {
             "parsed_data": data,
