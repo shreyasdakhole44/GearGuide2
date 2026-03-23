@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: gearsentinel-ai-service
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r ai_service/requirements.txt && cd ai_service && python train_model.py"
+    startCommand: "gunicorn -w 1 -k uvicorn.workers.UvicornWorker --chdir ai_service main:app --timeout 120"
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false 
+      - key: OPENAI_API_KEY
+        sync: false 
+      - key: PORT
+        value: "10000"
+      - key: PYTHON_VERSION
+        value: "3.10.0"
