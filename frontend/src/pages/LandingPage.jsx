@@ -8,21 +8,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ThreeWorkflow from '../components/ThreeWorkflow';
 import ChatBot from '../components/ChatBot';
 
-const LandingPage = () => {
+const LandingPage = ({ user, setUser }) => {
   const [tickerOffset, setTickerOffset] = useState(0);
   const [isHoveringTicker, setIsHoveringTicker] = useState(false);
-  const [user, setUser] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Load user from localStorage
+  // Load user from localStorage only if prop is not provided (for first load)
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    if (!user) {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser && setUser) {
+        setUser(JSON.parse(savedUser));
+      }
     }
-  }, []);
+  }, [user, setUser]);
 
   // Auto-scrolling ticker effect
   useEffect(() => {

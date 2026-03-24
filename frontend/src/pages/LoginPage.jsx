@@ -24,7 +24,7 @@ const LoginPage = ({ setAuth }) => {
         company: res.data.user?.company || 'GearGuide Partner'
       }));
       setAuth(true);
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       console.error("Login Error Detail:", err);
       setError(err.response?.data?.message || err.message || 'Authentication Failed');
