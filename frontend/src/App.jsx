@@ -11,8 +11,18 @@ import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 
 function App() {
-  // Authentication check removed as per user request to remove login form
-  
+  const [auth, setAuth] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      setAuth(true);
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
   const Layout = ({ children }) => {
     return (
       <div className="min-h-screen bg-[#F8FAFC] selection:bg-blue-500/30">
@@ -26,22 +36,17 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage user={user} setAuth={setAuth} setUser={setUser} />} />
         
-        {/* 
-            Single-Page AI Interface: 
-            Direct access enabled by removing ProtectedRoute
-        */}
         <Route path="/dashboard" element={<Layout><SentinelPage /></Layout>} />
         <Route path="/inventory" element={<Layout><InventoryMachine /></Layout>} />
         <Route path="/maintenance" element={<Layout><MaintenancePortal /></Layout>} />
         <Route path="/vajranet" element={<Layout><VajraNetPage /></Layout>} />
-        <Route path="/register" element={<RegisterPage setAuth={() => {}} />} />
-        <Route path="/login" element={<LoginPage setAuth={() => {}} />} />
+        <Route path="/register" element={<RegisterPage setAuth={setAuth} setUser={setUser} />} />
+        <Route path="/login" element={<LoginPage setAuth={setAuth} setUser={setUser} />} />
 
         <Route path="/assistant" element={<Navigate to="/dashboard" replace />} />
         
-        {/* Catch-all to Dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

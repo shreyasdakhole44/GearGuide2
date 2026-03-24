@@ -30,6 +30,15 @@ app.use('/api/logs', require('./routes/logs'));
 app.use('/api/predictions', require('./routes/predictions'));
 app.use('/api/machine-health', require('./routes/machineHealth'));
 app.use('/api/vajranet', require('./routes/vajra'));
+
+// Health Check for testing connection
+app.get('/api/ping', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        service: 'GearGuide Backend'
+    });
+});
 app.use('/api/inventory-machines', require('./routes/inventoryMachines'));
 app.use('/api/technicians', require('./routes/technician'));
 app.use('/api/storage', require('./routes/storage'));
