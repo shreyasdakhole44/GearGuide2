@@ -21,17 +21,10 @@ const LoginPage = ({ setAuth }) => {
         company: res.data.user?.company || 'GearGuide Partner'
       }));
       setAuth(true);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
-      if (err.response) {
-        setError(err.response.data.message || 'Authentication Failed');
-      } else {
-        // Fallback for demo
-        localStorage.setItem('token', 'fake-jwt-token');
-        localStorage.setItem('user', JSON.stringify({ name: 'Admin User', company: 'Industrial GigaPlant' }));
-        setAuth(true);
-        navigate('/');
-      }
+      console.error("Login Error Detail:", err);
+      setError(err.response?.data?.message || err.message || 'Authentication Failed');
     }
     setLoading(false);
   };

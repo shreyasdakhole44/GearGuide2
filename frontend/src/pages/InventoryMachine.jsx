@@ -38,10 +38,8 @@ const MetricBadge = ({ label, value, colorClass }) => (
 const WireframeSphere = () => {
   const mesh = useRef();
   useFrame((state) => {
-    // Using performance.now() or state.clock.elapsedTime might be safer, 
-    // but state.clock.getElapsedTime() is what triggers the warning in newer Three.js versions.
-    // However, R3F provides state.elapsedTime in newer versions.
-    const t = state.clock.elapsedTime || performance.now() / 1000;
+    // Using performance.now() to avoid the deprecated THREE.Clock warning
+    const t = performance.now() / 1000;
     mesh.current.rotation.x = t * 0.1;
     mesh.current.rotation.y = t * 0.15;
   });

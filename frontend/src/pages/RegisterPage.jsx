@@ -29,21 +29,12 @@ const RegisterPage = ({ setAuth }) => {
         website: formData.website
       });
       localStorage.setItem('token', res.data.token);
-
-      // Store mock user info locally to show on Landing Page as requested
-      localStorage.setItem('user', JSON.stringify({ name: formData.officerName, company: formData.companyName }));
-
+      localStorage.setItem('user', JSON.stringify(res.data.user));
       setAuth(true);
-      navigate('/'); // Go back to landing page to see the new profile
+      navigate('/dashboard');
     } catch (err) {
-      if (err.response) {
-        setError(err.response.data.message || 'Registration Failed');
-      } else {
-        localStorage.setItem('token', 'fake-jwt-token');
-        localStorage.setItem('user', JSON.stringify({ name: formData.officerName || 'John Doe', company: formData.companyName || 'Acme Corp' }));
-        setAuth(true);
-        navigate('/'); // Go back to landing page to see the new profile
-      }
+      console.error("Registration Error Detail:", err);
+      setError(err.response?.data?.message || err.message || 'Registration Failed');
     }
   };
 

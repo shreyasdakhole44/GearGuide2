@@ -2,9 +2,10 @@
   base = "frontend"
   command = "npm run build"
   publish = "dist"
+
 [[redirects]]
   from = "/api/*"
-  to = "https://gearguide2.onrender.com/api/:splat"
+  to = "https://gearsentinel-backend.onrender.com/api/:splat"
   status = 200
   force = true
 
@@ -13,4 +14,3 @@
   to = "/index.html"
   status = 200
   force = true
-
