@@ -182,9 +182,6 @@ const InventoryMachine = () => {
           headers: { 'x-auth-token': token }
       });
       setMachines(res.data.length > 0 ? res.data : MOCK_MACHINES);
-      if (res.data.length > 0 && !selectedMachine) {
-        setSelectedMachine(res.data[0]);
-      }
     } catch (err) {
       console.error("Fetch Error:", err);
       // Fallback to calculations if stats endpoint fails
@@ -316,16 +313,7 @@ const InventoryMachine = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-gray-900 font-inter pb-20 overflow-x-hidden">
       
-      <div className="pt-10 px-4 md:px-12 space-y-12">
-          <div className="flex items-center space-x-6">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center">
-              <Activity size={12} className="mr-2 text-blue-500" /> {machines.length} Assets Tracked
-            </span>
-            <button onClick={fetchMachines} className="p-1 hover:text-blue-600 transition-colors text-gray-400">
-              <RefreshCw size={12} className={syncTime % 10 === 0 ? "animate-spin" : ""} />
-            </button>
-          </div>
-      </div>
+
 
       {/* 2. KINETIC HEADER SECTION */}
       <section className="relative pt-16 pb-24 bg-[#020617] overflow-hidden min-h-[400px] flex items-center justify-center">
