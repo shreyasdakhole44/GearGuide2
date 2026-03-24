@@ -7,11 +7,11 @@ const MaintenanceLog = require('../models/MaintenanceLog');
 // @desc    Add new maintenance log
 // @access  Private
 router.post('/', auth, async (req, res) => {
-    const { machineId, issue, actionTaken, technician, date } = req.body;
+    const { machineId, assetName, issue, protocolLevel, technician, technicianInitials, date, status, duration } = req.body;
 
     try {
         const newLog = new MaintenanceLog({
-            machineId, issue, actionTaken, technician, date
+            machineId, assetName, issue, protocolLevel, technician, technicianInitials, date, status, duration
         });
 
         const log = await newLog.save();
@@ -22,12 +22,15 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
+
 // @route   GET api/logs
 // @desc    Get all maintenance logs
-// @access  Private
-router.get('/', auth, async (req, res) => {
+// @access  Public
+router.get('/', async (req, res) => {
     try {
-        const logs = await MaintenanceLog.find().populate('machineId', ['name', 'location']).sort({ date: -1 });
+        const logs = await MaintenanceLog.find().populate('machineId', ['name', 'type']).sort({ date: -1 });
+
+
         res.json(logs);
     } catch (err) {
         console.error(err.message);

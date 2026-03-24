@@ -13,6 +13,7 @@ const LandingPage = () => {
   const [isHoveringTicker, setIsHoveringTicker] = useState(false);
   const [user, setUser] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   // Load user from localStorage
@@ -168,37 +169,109 @@ const LandingPage = () => {
           </div>
 
           {/* Right Auth Section - Sign In / Sign Up OR User Profile */}
-          <div className="flex items-center space-x-2 bg-gray-50/80 p-1.5 rounded-full border border-gray-200">
-            {user ? (
-              <div className="flex items-center space-x-4 pl-4 pr-2 py-1">
-                <div className="flex flex-col text-right hidden md:flex">
-                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">{user.company}</span>
-                  <span className="text-xs font-bold text-gray-900 leading-none">{user.name}</span>
+          <div className="flex items-center space-x-2">
+            <div className="hidden md:flex items-center space-x-2 bg-gray-50/80 p-1.5 rounded-full border border-gray-200">
+              {user ? (
+                <div className="flex items-center space-x-4 pl-4 pr-2 py-1">
+                  <div className="flex flex-col text-right hidden md:flex">
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">{user.company}</span>
+                    <span className="text-xs font-bold text-gray-900 leading-none">{user.name}</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-[#0A1118] text-white flex items-center justify-center shadow-md">
+                    <User size={16} />
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    title="Logout"
+                  >
+                    <LogOut size={16} />
+                  </button>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-[#0A1118] text-white flex items-center justify-center shadow-md">
-                  <User size={16} />
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                  title="Logout"
-                >
-                  <LogOut size={16} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <Link to="/login" className="px-5 py-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-white rounded-full transition-all">
-                    Sign In
-                </Link>
-                <Link to="/register" className="px-5 py-2 bg-[#0A1118] text-white text-xs font-bold rounded-full hover:bg-[#3B82F6] shadow-md transition-all flex items-center">
-                  Register Company <ArrowRight size={14} className="ml-2" />
-                </Link>
-              </>
-            )}
+              ) : (
+                <>
+                  <Link to="/login" className="px-5 py-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-white rounded-full transition-all">
+                      Sign In
+                  </Link>
+                  <Link to="/register" className="px-5 py-2 bg-[#0A1118] text-white text-xs font-bold rounded-full hover:bg-[#3B82F6] shadow-md transition-all flex items-center">
+                    Register Company <ArrowRight size={14} className="ml-2" />
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-3 bg-gray-100 rounded-2xl text-gray-900 hover:bg-gray-200 transition-colors"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Zap size={24} className="text-blue-600" />}
+            </button>
           </div>
         </nav>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-[45] bg-white pt-32 px-6 flex flex-col space-y-8 lg:hidden"
+          >
+            <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-gray-50 rounded-[2rem] group border border-gray-100">
+               <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-blue-500 text-white rounded-2xl"><Cpu size={24} /></div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Platform</span>
+                    <span className="text-xl font-black text-gray-900">Superior AI Agent</span>
+                  </div>
+               </div>
+               <ArrowRight size={24} className="text-gray-300" />
+            </Link>
+            <Link to="/inventory" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-gray-50 rounded-[2rem] group border border-gray-100">
+               <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-teal-500 text-white rounded-2xl"><Database size={24} /></div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hardware</span>
+                    <span className="text-xl font-black text-gray-900">Inventory Machine</span>
+                  </div>
+               </div>
+               <ArrowRight size={24} className="text-gray-300" />
+            </Link>
+            <Link to="/maintenance" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between p-6 bg-gray-50 rounded-[2rem] group border border-gray-100">
+               <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-orange-500 text-white rounded-2xl"><Activity size={24} /></div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tracking</span>
+                    <span className="text-xl font-black text-gray-900">Maintenance Logs</span>
+                  </div>
+               </div>
+               <ArrowRight size={24} className="text-gray-300" />
+            </Link>
+
+            <div className="pt-8 mt-auto border-t border-gray-100 pb-12 space-y-4">
+              {user ? (
+                 <div className="flex items-center justify-between bg-black text-white p-6 rounded-[2rem]">
+                    <div className="flex items-center space-x-4">
+                       <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center font-black">{user.name.charAt(0)}</div>
+                       <div className="flex flex-col">
+                          <span className="text-lg font-black">{user.name}</span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{user.company}</span>
+                       </div>
+                    </div>
+                    <button onClick={handleLogout} className="p-4 bg-white/10 rounded-2xl"><LogOut size={24} /></button>
+                 </div>
+              ) : (
+                <Link to="/register" onClick={() => setIsMobileMenuOpen(false)} className="w-full py-5 bg-[#0A1118] text-white text-center font-black rounded-[2rem] shadow-xl block">
+                   Register Company Setup
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 
         =================

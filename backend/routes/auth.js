@@ -46,15 +46,20 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
+    // Direct check for missing fields
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Please provide both email and access key' });
+    }
+
     try {
         let user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ message: 'Invalid Credentials' });
+            return res.status(400).json({ message: 'No registered officer found with this identity' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid Credentials' });
+            return res.status(400).json({ message: 'Incorrect Access Key' });
         }
 
         const payload = { user: { id: user.id } };

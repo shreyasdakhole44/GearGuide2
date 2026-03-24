@@ -24,7 +24,7 @@ const LogsPage = () => {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/logs`, {
+                const res = await axios.get('/api/logs', {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
                 });
                 setLogs(res.data);

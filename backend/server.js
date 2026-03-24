@@ -6,7 +6,8 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(express.json({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // Connect Database
@@ -30,6 +31,10 @@ app.use('/api/predictions', require('./routes/predictions'));
 app.use('/api/machine-health', require('./routes/machineHealth'));
 app.use('/api/vajranet', require('./routes/vajra'));
 app.use('/api/inventory-machines', require('./routes/inventoryMachines'));
+app.use('/api/technicians', require('./routes/technician'));
+app.use('/api/storage', require('./routes/storage'));
+app.use('/api/workorders', require('./routes/workorders'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 
 const PORT = process.env.PORT || 5000;

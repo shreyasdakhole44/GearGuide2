@@ -19,8 +19,8 @@ const RegisterPage = ({ setAuth }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      // Send register to backend (adjust based on your actual schema if needed)
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      // Use local proxy in development for consistency
+      const res = await axios.post('/api/auth/register', {
         name: formData.officerName,
         email: formData.email,
         password: formData.password,

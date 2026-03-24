@@ -11,7 +11,7 @@ const MachinesPage = () => {
     useEffect(() => {
         const fetchMachines = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/machines`, {
+                const res = await axios.get('/api/machines', {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
                 });
                 setMachines(res.data);
