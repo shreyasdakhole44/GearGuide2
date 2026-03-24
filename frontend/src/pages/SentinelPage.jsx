@@ -12,6 +12,9 @@ import {
 import GlossyAgent from '../components/GlossyAgent';
 import IdentificationKernelPanel from '../components/IdentificationKernelPanel';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://gearsentinel-backend.onrender.com';
+const API_URL = (path) => `${API_BASE}${path}`;
+
 const SentinelPage = () => {
     const navigate = useNavigate();
     
@@ -98,7 +101,7 @@ const SentinelPage = () => {
         setIsChatting(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/machine-health/chat', {
+            const response = await fetch(API_URL('/api/machine-health/chat'), {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -125,8 +128,11 @@ const SentinelPage = () => {
         setCrisisTimerActive(false);
 
         try {
+            // Wake-up call for cold starts
+            try { await fetch(API_URL('/api/ping')); } catch (e) {}
+
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/machine-health/predict', {
+            const response = await fetch(API_URL('/api/machine-health/predict'), {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -232,7 +238,7 @@ const SentinelPage = () => {
     const fetchHistory = async (mId) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/machine-health/history/${mId}`, {
+            const response = await fetch(API_URL(`/api/machine-health/history/${mId}`), {
                 headers: { 'x-auth-token': token }
             });
             const data = await response.json();
@@ -244,7 +250,7 @@ const SentinelPage = () => {
         setIsAnalyzingFleet(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/machine-health/analyze-batch', {
+            const response = await fetch(API_URL('/api/machine-health/analyze-batch'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ machines: fleetMachines })
@@ -266,7 +272,7 @@ const SentinelPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/machine-health/upload-maintenance-log', {
+            const response = await fetch(API_URL('/api/machine-health/upload-maintenance-log'), {
                 method: 'POST',
                 headers: { 'x-auth-token': token },
                 body: formData
@@ -297,7 +303,7 @@ const SentinelPage = () => {
         if (!resultData) return;
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/machine-health/generate-report', {
+            const response = await fetch(API_URL('/api/machine-health/generate-report'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ ...resultData, machine_id: machineMeta.serial })

@@ -18,6 +18,9 @@ import autoTable from 'jspdf-autotable';
 import VajraHardware from '../components/VajraHardware';
 import DataFlowDiagram from '../components/DataFlowDiagram';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://gearsentinel-backend.onrender.com';
+const API_URL = (path) => `${API_BASE}${path}`;
+
 const VajraNetPage = () => {
     const navigate = useNavigate();
     const [feeds, setFeeds] = useState([]);
@@ -149,7 +152,7 @@ const VajraNetPage = () => {
     const saveToDB = async () => {
         setIsSaving(true);
         try {
-            const response = await fetch('/api/vajranet/archive', {
+            const response = await fetch(API_URL('/api/vajranet/archive'), {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

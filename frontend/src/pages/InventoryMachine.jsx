@@ -12,6 +12,9 @@ import { OrbitControls, PerspectiveCamera, Float, Sphere, MeshDistortMaterial, C
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://gearsentinel-backend.onrender.com';
+const API_URL = (path) => `${API_BASE}${path}`;
+
 // --- STYLED COMPONENTS ---
 
 const GlassCard = ({ children, className = "" }) => (
@@ -161,14 +164,21 @@ const InventoryMachine = () => {
   const fetchMachines = async () => {
     setIsMachinesLoading(true);
     try {
+      // Proactive wake-up call to address Render cold starts
+      try {
+        await axios.get(API_URL('/api/ping'), { timeout: 10000 });
+      } catch (e) {
+        console.warn('Server wake-up protocol initiated...');
+      }
+
       const token = localStorage.getItem('token');
       // Fetch stats first for immediate KPI update
-      const statsRes = await axios.get('/api/inventory-machines/stats', {
+      const statsRes = await axios.get(API_URL('/api/inventory-machines/stats'), {
           headers: { 'x-auth-token': token }
       });
       if (statsRes.data) setStats(statsRes.data);
 
-      const res = await axios.get('/api/inventory-machines', {
+      const res = await axios.get(API_URL('/api/inventory-machines'), {
           headers: { 'x-auth-token': token }
       });
       setMachines(res.data.length > 0 ? res.data : MOCK_MACHINES);
@@ -212,7 +222,7 @@ const InventoryMachine = () => {
         maintenance_log: "Normal operations detected. Baseline established."
       };
 
-      const res = await axios.post('/api/machine-health/predict', payload, {
+      const res = await axios.post(API_URL('/api/machine-health/predict'), payload, {
         headers: { 'x-auth-token': localStorage.getItem('token') }
       });
       setAiHealth(res.data);
@@ -271,7 +281,7 @@ const InventoryMachine = () => {
     try {
       const posX = Math.random() * 16 - 8;
       const posZ = Math.random() * 16 - 8;
-      await axios.post('/api/inventory-machines', 
+      await axios.post(API_URL('/api/inventory-machines'), 
         { ...newMachine, posX, posZ },
         { headers: { 'x-auth-token': localStorage.getItem('token') } }
       );
@@ -291,7 +301,7 @@ const InventoryMachine = () => {
     }
     if (!window.confirm("Are you sure you want to decommission this asset?")) return;
     try {
-      await axios.delete(`/api/inventory-machines/${id}`, {
+      await axios.delete(API_URL(`/api/inventory-machines/${id}`), {
         headers: { 'x-auth-token': localStorage.getItem('token') }
       });
       setSelectedMachine(null);

@@ -32,6 +32,10 @@ const NavItem = ({ icon, active, onClick }) => (
     </button>
 );
 
+// --- CONFIG & UTILITIES ---
+const API_BASE = import.meta.env.VITE_API_URL || 'https://gearsentinel-backend.onrender.com';
+const API_URL = (path) => `${API_BASE}${path}`;
+
 const SensorWidget = ({ label, value, color }) => (
     <div className="flex flex-col">
         <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{label}</span>
@@ -126,46 +130,100 @@ const MaintenancePortal = () => {
     // Fetch database logs
     useEffect(() => {
         const fetchData = async () => {
+            console.log('--- Initializing Data Sync Protocol ---');
+            
+            // Wake-up call to handle Render cold starts (handles potential 504 proxy timeout)
             try {
-                const [logsRes, techsRes, storageRes, workRes, analyticsRes] = await Promise.all([
-                    axios.get('/api/logs'),
-                    axios.get('/api/technicians'),
-                    axios.get('/api/storage'),
-                    axios.get('/api/workorders'),
-                    axios.get('/api/analytics/downtime')
-                ]);
-                setDbLogs(logsRes.data);
-                setTechnicians(techsRes.data);
-                setStorage(storageRes.data);
-                setWorkOrders(workRes.data);
-                setDowntimeData(analyticsRes.data);
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                // Fallbacks...
-                setDbLogs([
-                    { _id: '1', assetName: 'HVAC-03', issue: 'Sensor drift corrected via manual bypass', protocolLevel: 'WARNING', technicianEmail: 'sdakhole18@gmail.com', technician: 'J. DOE', technicianInitials: 'JD', date: new Date(), duration: '45m' },
-                    { _id: '2', assetName: 'CNC-04', issue: 'Spindle recalibration based on vibration spike', protocolLevel: 'CRITICAL', technicianEmail: 'sdakhole18@gmail.com', technician: 'M. CHEN', technicianInitials: 'MC', date: new Date(), duration: '1h 20m' },
-                    { _id: '3', assetName: 'ROBOT-01', issue: 'Hydraulic pressure test and seal check', protocolLevel: 'ROUTINE', technicianEmail: 'sdakhole18@gmail.com', technician: 'ALEX R.', technicianInitials: 'AR', date: new Date(), duration: '2h 15m' },
-                    { _id: '4', assetName: 'ST-900 CORE', issue: 'Neural link recalibration required', protocolLevel: 'WARNING', technicianEmail: 'sdakhole18@gmail.com', technician: 'SARAH J.', technicianInitials: 'S', date: new Date(), duration: '15m' }
-                ]);
-                setTechnicians([
-                    { _id: '1', name: 'Sarah Chen', email: 'sdakhole18@gmail.com', role: 'CERTIFIED TECH LVL 2', activeDeployment: { level: 'CRITICAL', asset: 'CNC-04' }, load: 35, estFinish: '15M', status: 'ACTIVE' },
-                    { _id: '2', name: 'Mike Ross', email: 'sdakhole4@gmail.com', role: 'CERTIFIED TECH LVL 1', activeDeployment: { level: 'WARNING', asset: 'HVAC-03' }, load: 60, estFinish: '45M', status: 'ACTIVE' }
-                ]);
-                setStorage([
-                    { _id: '1', filename: 'CNC-04_REPORT.PDF', uploadTime: '10:45', technician: 'SARAH', size: '2.4MB' },
-                    { _id: '2', filename: 'HVAC-03_SENSOR.JPG', uploadTime: '09:30', technician: 'MIKE', size: '1.8MB' }
-                ]);
-                setWorkOrders([
-                    { id: 'WO-001', title: 'CNC-04 OVERHEAT', priority: 'P0', technician: 'SARAH', technicianEmail: 'sdakhole18@gmail.com', progress: 30, status: 'ACTIVE', sector: 'G-4' },
-                    { id: 'WO-002', title: 'HVAC-03 CALIBRATION', priority: 'P1', technician: 'MIKE', technicianEmail: 'sdakhole18@gmail.com', progress: 60, status: 'ACTIVE', sector: 'G-4' },
-                    { id: 'WO-003', title: 'ROBOT-01 ROUTINE', priority: 'P2', technician: 'ALEX', technicianEmail: 'sdakhole18@gmail.com', progress: 100, status: 'ACTIVE', sector: 'G-4' }
-                ]);
-                setDowntimeData([
-                    { day: 'M', value: 1.2 }, { day: 'T', value: 1.8 }, { day: 'W', value: 3.8 },
-                    { day: 'T', value: 2.5 }, { day: 'F', value: 1.5 }, { day: 'S', value: 0.8 }, { day: 'S', value: 0.5 }
-                ]);
+                await axios.get(API_URL('/api/ping'), { timeout: 15000 });
+            } catch (pErr) {
+                console.warn('⚠️ Server Wake-up Pending or Timeout:', pErr.message);
             }
+
+            // Individual fetchers for robustness
+            const fetchLogs = async () => {
+                try {
+                    const res = await axios.get(API_URL('/api/logs'));
+                    console.log('✅ Logs Synced:', res.data.length, 'records found.');
+                    setDbLogs(res.data);
+                } catch (err) {
+                    console.error('❌ Logs Fetch Failed:', err);
+                    // Use limited fallback just for logs if absolutely necessary, or leave empty to show loading/sync state
+                    setDbLogs([
+                        { _id: '1', assetName: 'HVAC-03', issue: 'Sensor drift corrected via manual bypass', protocolLevel: 'WARNING', technicianEmail: 'sdakhole18@gmail.com', technician: 'J. DOE', technicianInitials: 'JD', date: new Date(), duration: '45m' },
+                        { _id: '2', assetName: 'CNC-04', issue: 'Spindle recalibration based on vibration spike', protocolLevel: 'CRITICAL', technicianEmail: 'sdakhole18@gmail.com', technician: 'M. CHEN', technicianInitials: 'MC', date: new Date(), duration: '1h 20m' },
+                        { _id: '3', assetName: 'ROBOT-01', issue: 'Hydraulic pressure test and seal check', protocolLevel: 'ROUTINE', technicianEmail: 'sdakhole18@gmail.com', technician: 'ALEX R.', technicianInitials: 'AR', date: new Date(), duration: '2h 15m' },
+                        { _id: '4', assetName: 'ST-900 CORE', issue: 'Neural link recalibration required', protocolLevel: 'WARNING', technicianEmail: 'sdakhole18@gmail.com', technician: 'SARAH J.', technicianInitials: 'S', date: new Date(), duration: '15m' }
+                    ]);
+                }
+            };
+
+            const fetchTechs = async () => {
+                try {
+                    const res = await axios.get(API_URL('/api/technicians'));
+                    console.log('✅ Personnel Synced:', res.data.length, 'agents active.');
+                    setTechnicians(res.data);
+                } catch (err) {
+                    console.error('❌ Personnel Fetch Failed:', err);
+                    setTechnicians([
+                        { _id: '1', name: 'Sarah Chen', email: 'sdakhole18@gmail.com', role: 'CERTIFIED TECH LVL 2', activeDeployment: { level: 'CRITICAL', asset: 'CNC-04' }, load: 35, estFinish: '15M', status: 'ACTIVE' },
+                        { _id: '2', name: 'Mike Ross', email: 'sdakhole4@gmail.com', role: 'CERTIFIED TECH LVL 1', activeDeployment: { level: 'WARNING', asset: 'HVAC-03' }, load: 60, estFinish: '45M', status: 'ACTIVE' }
+                    ]);
+                }
+            };
+
+            const fetchStorage = async () => {
+                try {
+                    const res = await axios.get(API_URL('/api/storage'));
+                    console.log('✅ Archive Hub Synced:', res.data.length, 'documents found.');
+                    setStorage(res.data);
+                } catch (err) {
+                    console.error('❌ Archive Fetch Failed:', err);
+                    setStorage([
+                        { _id: '1', filename: 'CNC-04_REPORT.PDF', uploadTime: '10:45', technician: 'SARAH', size: '2.4MB' },
+                        { _id: '2', filename: 'HVAC-03_SENSOR.JPG', uploadTime: '09:30', technician: 'MIKE', size: '1.8MB' }
+                    ]);
+                }
+            };
+
+            const fetchWorkOrders = async () => {
+                try {
+                    const res = await axios.get(API_URL('/api/workorders'));
+                    console.log('✅ Mission Control Synced:', res.data.length, 'work orders active.');
+                    setWorkOrders(res.data);
+                } catch (err) {
+                    console.error('❌ Mission Control Fetch Failed:', err);
+                    setWorkOrders([
+                        { id: 'WO-001', title: 'CNC-04 OVERHEAT', priority: 'P0', technician: 'SARAH', technicianEmail: 'sdakhole18@gmail.com', progress: 30, status: 'ACTIVE', sector: 'G-4' },
+                        { id: 'WO-002', title: 'HVAC-03 CALIBRATION', priority: 'P1', technician: 'MIKE', technicianEmail: 'sdakhole18@gmail.com', progress: 60, status: 'ACTIVE', sector: 'G-4' },
+                        { id: 'WO-003', title: 'ROBOT-01 ROUTINE', priority: 'P2', technician: 'ALEX', technicianEmail: 'sdakhole18@gmail.com', progress: 100, status: 'ACTIVE', sector: 'G-4' }
+                    ]);
+                }
+            };
+
+            const fetchAnalytics = async () => {
+                try {
+                    const res = await axios.get(API_URL('/api/analytics/downtime'));
+                    console.log('✅ Downtime Analytics Synced.');
+                    setDowntimeData(res.data);
+                } catch (err) {
+                    console.error('❌ Analytics Fetch Failed:', err);
+                    setDowntimeData([
+                        { day: 'M', value: 1.2 }, { day: 'T', value: 1.8 }, { day: 'W', value: 3.8 },
+                        { day: 'T', value: 2.5 }, { day: 'F', value: 1.5 }, { day: 'S', value: 0.8 }, { day: 'S', value: 0.5 }
+                    ]);
+                }
+            };
+
+            // Fire all requests in parallel
+            await Promise.allSettled([
+                fetchLogs(),
+                fetchTechs(),
+                fetchStorage(),
+                fetchWorkOrders(),
+                fetchAnalytics()
+            ]);
+            
+            console.log('--- Sync Operations Completed ---');
         };
         fetchData();
     }, []);

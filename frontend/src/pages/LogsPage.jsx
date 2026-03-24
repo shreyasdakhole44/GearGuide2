@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://gearsentinel-backend.onrender.com';
+const API_URL = (path) => `${API_BASE}${path}`;
+
 const LogsPage = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,7 +27,7 @@ const LogsPage = () => {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const res = await axios.get('/api/logs', {
+                const res = await axios.get(API_URL('/api/logs'), {
                     headers: { 'x-auth-token': localStorage.getItem('token') }
                 });
                 setLogs(res.data);

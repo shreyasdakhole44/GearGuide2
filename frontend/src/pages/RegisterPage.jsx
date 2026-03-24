@@ -4,6 +4,9 @@ import axios from 'axios';
 import { Building2, Globe, MapPin, User, Mail, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://gearsentinel-backend.onrender.com';
+const API_URL = (path) => `${API_BASE}${path}`;
+
 const RegisterPage = ({ setAuth }) => {
   const [formData, setFormData] = useState({
     companyName: '',
@@ -19,8 +22,8 @@ const RegisterPage = ({ setAuth }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      // Use local proxy in development for consistency
-      const res = await axios.post('/api/auth/register', {
+      // Use direct API URL to bypass Netlify proxy timeouts
+      const res = await axios.post(API_URL('/api/auth/register'), {
         name: formData.officerName,
         email: formData.email,
         password: formData.password,

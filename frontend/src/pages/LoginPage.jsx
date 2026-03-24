@@ -4,6 +4,9 @@ import axios from 'axios';
 import { ShieldCheck, Zap, ArrowRight, Lock, Mail, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://gearsentinel-backend.onrender.com';
+const API_URL = (path) => `${API_BASE}${path}`;
+
 const LoginPage = ({ setAuth }) => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -14,7 +17,7 @@ const LoginPage = ({ setAuth }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post('/api/auth/login', formData);
+      const res = await axios.post(API_URL('/api/auth/login'), formData);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify({
         name: res.data.user?.name || 'Authorized Officer',
